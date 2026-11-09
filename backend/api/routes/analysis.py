@@ -1,0 +1,120 @@
+from fastapi import APIRouter, HTTPException
+
+from mahjong_engine.adapters.mahjong_repository_adapter import MahjongRepositoryAdapter
+from mahjong_engine.domain.game_state import GameState
+from mahjong_engine.domain.meld import Meld, MeldType
+from mahjong_engine.domain.rule_profile import RuleProfile
+from mahjong_engine.domain.tile import PhysicalTile, Suit, TileType, TileVariant
+from mahjong_engine.efficiency.shanten_calculator import ShantenCalculator
+from mahjong_engine.efficiency.ukeire_calculator import UkeireCalculator
+from mahjong_engine.scoring.score_calculator import ScoreCalculator
+from schemas.analysis import (
+    ShantenRequest, ShantenResponse,
+    UkeireRequest, UkeireResponse,
+    ScoringRequest, ScoringResponse,
+    PhysicalTileSchema, MeldSchema,
+)
+
+router = APIRouter()
+_adapter = MahjongRepositoryAdapter()
+_shanten_calc = ShantenCalculator(_adapter)
+_ukeire_calc = UkeireCalculator(_adapter)
+_score_calc = ScoreCalculator(_adapter)
+
+
+def _to_physical_tile(s: PhysicalTileSchema) -> PhysicalTile:
+    tile_type = TileType(suit=Suit(s.suit), rank=s.rank)
+    variant = TileVariant(s.variant)
+    return PhysicalTile(tile_type=tile_type, variant=variant, physical_id=s.physical_id)
+
+
+def _to_meld(s: MeldSchema) -> Meld:
+    return Meld(
+        meld_type=MeldType(s.meld_type),
+        tiles=tuple(_to_physical_tile(t) for t in s.tiles),
+        stolen_from=s.stolen_from,
+    )
+
+
+def _to_game_state(s) -> GameState:
+    return GameState(
+        hand=[_to_physical_tile(t) for t in s.hand],
+        drawn_tile=_to_physical_tile(s.drawn_tile) if s.drawn_tile else None,
+        melds=[_to_meld(m) for m in s.melds],
+        discards=[[_to_physical_tile(t) for t in row] for row in s.discards],
+        dora_indicators=[_to_physical_tile(t) for t in s.dora_indicators],
+        scores=s.scores,
+        chips=s.chips,
+        round_wind=s.round_wind,
+        hand_number=s.hand_number,
+        honba=s.honba,
+        riichi_sticks=s.riichi_sticks,
+        dealer=s.dealer,
+        player_seat=s.player_seat,
+        remaining_hands=s.remaining_hands,
+        rule_version_id=s.rule_version_id,
+    )
+
+
+def _default_rule() -> RuleProfile:
+    return RuleProfile(rule_name="default")
+
+
+@router.post("/shanten", response_model=ShantenResponse)
+async def shanten(req: ShantenRequest) -> ShantenResponse:
+    game_state = _to_game_state(req.game_state)
+    errors = game_state.validate()
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+    shanten_num = _shanten_calc.calculate(hand, game_state.melds)
+    return ShantenResponse(shanten=shanten_num)
+
+
+@router.post("/ukeire", response_model=UkeireResponse)
+async def ukeire(req: UkeireRequest) -> UkeireResponse:
+    game_state = _to_game_state(req.game_state)
+    errors = game_state.validate()
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    rule = _default_rule()
+    hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+    entries = _ukeire_calc.calculate(hand, game_state.melds, game_state, rule)
+    return UkeireResponse(ukeire=entries, total_ukeire=sum(e["remaining_count"] for e in entries))
+
+
+@router.post("/scoring", response_model=ScoringResponse)
+async def scoring(req: ScoringRequest) -> ScoringResponse:
+    game_state = _to_game_state(req.game_state)
+    win_tile = _to_physical_tile(req.win_tile)
+    rule = _default_rule()
+
+    context = {
+        "is_tsumo": req.is_tsumo,
+        "is_riichi": req.is_riichi,
+        "dora_indicators": [
+            {"suit": t.tile_type.suit.value, "rank": t.tile_type.rank}
+            for t in game_state.dora_indicators
+        ],
+    }
+
+    result = _score_calc.calculate(
+        game_state.hand, win_tile, game_state.melds, context, rule
+    )
+
+    if "error" in result and result["error"]:
+        return ScoringResponse(
+            han=0, fu=0, cost={}, yaku=[], blue_tile_count=0, chip_count=0,
+            error=result["error"],
+        )
+
+    return ScoringResponse(
+        han=result.get("han", 0),
+        fu=result.get("fu", 0),
+        cost=result.get("cost", {}),
+        yaku=result.get("yaku", []),
+        blue_tile_count=result.get("blue_tile_count", 0),
+        chip_count=result.get("chip_count", 0),
+    )

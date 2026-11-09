@@ -1,20 +1,20 @@
 # ロードマップ
 
-## Phase 1 — 基盤構築（既存ライブラリ導入）
+## Phase 1 — 基盤構築（既存ライブラリ導入）✅ 完了（2026-11-09）
 *概算工数: 8〜13人日*
 
 ### 目標
 MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 
 ### タスク
-- [ ] プロジェクト初期セットアップ（FastAPI / Next.js / DB マイグレーション）
-- [ ] `Tile` / `PhysicalTile` / `TileType` ドメインモデル実装
-- [ ] `GameState` 入力モデルと入力バリデーション実装
-- [ ] MahjongRepository/mahjong の動作確認・Adapter 実装
-- [ ] シャンテン数計算 API (`POST /api/analysis/shanten`)
-- [ ] 受け入れ計算 API (`POST /api/analysis/ukeire`)
-- [ ] 役・点数計算 API (`POST /api/analysis/scoring`)
-- [ ] 単体テスト（Tile, Shanten, Ukeire, Scoring）
+- [x] プロジェクト初期セットアップ（FastAPI / Next.js / DB マイグレーション）
+- [x] `Tile` / `PhysicalTile` / `TileType` ドメインモデル実装
+- [x] `GameState` 入力モデルと入力バリデーション実装
+- [x] MahjongRepository/mahjong の動作確認・Adapter 実装
+- [x] シャンテン数計算 API (`POST /api/analysis/shanten`)
+- [x] 受け入れ計算 API (`POST /api/analysis/ukeire`)
+- [x] 役・点数計算 API (`POST /api/analysis/scoring`)
+- [x] 単体テスト（Tile, Shanten, Ukeire, Scoring）
 
 ---
 
