@@ -55,6 +55,16 @@ services:
     ports:
       - "6379:6379"
 
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    profiles:
+      - ollama
+
 volumes:
   postgres_data:
   redis_data:
+  ollama_data:

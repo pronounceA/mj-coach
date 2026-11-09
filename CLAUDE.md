@@ -13,6 +13,8 @@
 | 麻雀ライブラリ | MahjongRepository/mahjong |
 | データベース | PostgreSQL 16 |
 | キャッシュ | Redis 7 |
+| LLM（本番） | Claude API（`LLM_PROVIDER=claude`） |
+| LLM（開発） | Ollama（`LLM_PROVIDER=ollama`）|
 
 ## ディレクトリ構成
 
