@@ -7,6 +7,8 @@ from mahjong_engine.domain.rule_profile import RuleProfile
 from mahjong_engine.domain.tile import PhysicalTile, Suit, TileType, TileVariant
 from mahjong_engine.efficiency.shanten_calculator import ShantenCalculator
 from mahjong_engine.efficiency.ukeire_calculator import UkeireCalculator
+from mahjong_engine.rules.chip_calculator import ChipCalculator
+from mahjong_engine.rules.dora_calculator import DoraCalculator
 from mahjong_engine.scoring.score_calculator import ScoreCalculator
 from schemas.analysis import (
     ShantenRequest, ShantenResponse,
@@ -14,6 +16,7 @@ from schemas.analysis import (
     ScoringRequest, ScoringResponse,
     PhysicalTileSchema, MeldSchema,
 )
+from schemas.discard import DiscardsRequest, DiscardsResponse, DiscardCandidateResult
 
 router = APIRouter()
 _adapter = MahjongRepositoryAdapter()
@@ -118,3 +121,44 @@ async def scoring(req: ScoringRequest) -> ScoringResponse:
         blue_tile_count=result.get("blue_tile_count", 0),
         chip_count=result.get("chip_count", 0),
     )
+
+
+@router.post("/discards", response_model=DiscardsResponse)
+async def discards(req: DiscardsRequest) -> DiscardsResponse:
+    game_state = _to_game_state(req.game_state)
+    errors = game_state.validate()
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    rule = _default_rule()
+    dora_calc = DoraCalculator(rule)
+    chip_calc = ChipCalculator(rule)
+
+    full_hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+    melds_tiles = [t for m in game_state.melds for t in m.tiles]
+    candidates = []
+
+    for discard in full_hand:
+        hand_after = [t for t in full_hand if t is not discard]
+
+        shanten = _shanten_calc.calculate(hand_after, game_state.melds)
+        ukeire = _ukeire_calc.calculate_after_discard(
+            full_hand, discard, game_state.melds, game_state, rule
+        )
+        dora = dora_calc.count_dora(hand_after, melds_tiles, game_state.dora_indicators)
+        chip_count = chip_calc.count_chips(hand_after, melds_tiles, is_win=True)
+
+        candidates.append(DiscardCandidateResult(
+            discard=str(discard),
+            shanten=shanten,
+            ukeire=ukeire,
+            total_ukeire=sum(e["remaining_count"] for e in ukeire),
+            normal_dora=dora["normal_dora"],
+            red_dora=dora["red_dora"],
+            blue_dora=dora["blue_dora"],
+            total_dora_han=dora["total_dora_han"],
+            chip_count_on_win=chip_count,
+        ))
+
+    candidates.sort(key=lambda c: (c.shanten, -c.total_ukeire))
+    return DiscardsResponse(candidates=candidates)

@@ -18,21 +18,21 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 
 ---
 
-## Phase 2 — 独自ルール対応
+## Phase 2 — 独自ルール対応 ✅ 完了（2026-11-09）
 *概算工数: 10〜18人日*
 
 ### 目標
 青牌・赤牌・チップ・ルールプロファイルを管理できるようにする。
 
 ### タスク
-- [ ] ルールプロファイル JSON スキーマ設計
-- [ ] ルールプロファイル CRUD API (`GET/POST/PUT /api/rules`)
-- [ ] ルールバリデーション (`POST /api/rules/{id}/validate`)
-- [ ] 赤牌・青牌のドラ計算実装
-- [ ] チップ獲得条件モデル実装（`AGARI_WITH_BLUE` / `PER_BLUE_TILE` / `DRAW_BLUE`）
-- [ ] チップ精算モデル実装
-- [ ] 打牌候補比較 API (`POST /api/analysis/discards`)
-- [ ] 単体テスト（Dora, Chip, RuleProfile）
+- [x] ルールプロファイル JSON スキーマ設計
+- [x] ルールプロファイル CRUD API (`GET/POST/PUT /api/rules`)
+- [x] ルールバリデーション (`POST /api/rules/{id}/validate`)
+- [x] 赤牌・青牌のドラ計算実装
+- [x] チップ獲得条件モデル実装（`AGARI_WITH_BLUE` / `PER_BLUE_TILE` / `DRAW_BLUE`）
+- [x] チップ精算モデル実装
+- [x] 打牌候補比較 API (`POST /api/analysis/discards`)
+- [x] 単体テスト（Dora, Chip, RuleProfile）
 
 ---
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import analysis
+from api.routes import analysis, rules
 
 app = FastAPI(title="mj-coach API", version="1.0.0")
 
@@ -14,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
+app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
 
 
 @app.get("/health")
