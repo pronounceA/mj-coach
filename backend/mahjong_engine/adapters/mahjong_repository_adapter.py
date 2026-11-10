@@ -58,8 +58,8 @@ class MahjongRepositoryAdapter(MahjongEngineAdapter):
         current_shanten = shanten_calc.calculate_shanten(tiles_34)
 
         ukeire = []
-        for suit in [Suit.MAN, Suit.PIN, Suit.SOU]:
-            max_rank = 9
+        for suit in [Suit.MAN, Suit.PIN, Suit.SOU, Suit.HONOR]:
+            max_rank = 7 if suit == Suit.HONOR else 9
             for rank in range(1, max_rank + 1):
                 tile_type = TileType(suit=suit, rank=rank)
                 remaining_count = remaining.get(str(tile_type), 0)

@@ -10,11 +10,12 @@ def build_remaining(game_state: GameState, rule: RuleProfile) -> dict[str, int]:
     known = game_state.all_known_tiles()
 
     total: dict[str, int] = {}
-    for suit in [Suit.MAN, Suit.PIN, Suit.SOU]:
-        for rank in range(1, 10):
+    for suit in [Suit.MAN, Suit.PIN, Suit.SOU, Suit.HONOR]:
+        max_rank = 7 if suit == Suit.HONOR else 9
+        for rank in range(1, max_rank + 1):
             tt = TileType(suit=suit, rank=rank)
             key = str(tt)
-            if rank == 5:
+            if suit != Suit.HONOR and rank == 5:
                 total[key] = rule.normal_count_per_suit()
             else:
                 total[key] = 4
