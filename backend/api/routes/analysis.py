@@ -205,11 +205,12 @@ async def push_fold(req: PushFoldRequest) -> PushFoldResponse:
 
     full_hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
 
-    # 押し牌を切った後の手牌と受け入れ情報
-    hand_after_push = [t for t in full_hand if t is not push_tile]
-    # push_tile が物理的に同一でない場合（schema 経由で来た牌）は tile_type で一致させる
-    if len(hand_after_push) == len(full_hand):
-        hand_after_push = [t for t in full_hand if t.tile_type != push_tile.tile_type][:len(full_hand) - 1]
+    # push_tile はスキーマ経由の新規オブジェクトなので is not は使えない。
+    # tile_type が一致する最初の1枚だけを取り除く。
+    idx = next((i for i, t in enumerate(full_hand) if t.tile_type == push_tile.tile_type), -1)
+    if idx < 0:
+        raise HTTPException(status_code=422, detail="push_discard が手牌に存在しません")
+    hand_after_push = full_hand[:idx] + full_hand[idx + 1:]
 
     shanten = _shanten_calc.calculate(hand_after_push, game_state.melds)
     ukeire_entries = _ukeire_calc.calculate(hand_after_push, game_state.melds, game_state, rule)

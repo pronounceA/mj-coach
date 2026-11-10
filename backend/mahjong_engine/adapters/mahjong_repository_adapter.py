@@ -110,7 +110,6 @@ class MahjongRepositoryAdapter(MahjongEngineAdapter):
             round_wind=context.get("round_wind"),
             options=OptionalRules(
                 has_aka_dora=True,
-                aka_dora_count=context.get("aka_dora_count", 0),
             ),
         )
 

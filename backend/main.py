@@ -1,9 +1,22 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import analysis, rules
+from database import engine, Base
+import models.rule_profile  # noqa: F401 — register models with Base
+import models.analysis       # noqa: F401
 
-app = FastAPI(title="mj-coach API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(title="mj-coach API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

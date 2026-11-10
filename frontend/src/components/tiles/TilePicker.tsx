@@ -12,16 +12,25 @@ interface TilePickerProps {
 }
 
 const SUIT_STYLES: Record<string, { bg: string; border: string; text: string }> = {
-  m: { bg: "bg-amber-100", border: "border-amber-400", text: "text-amber-900" },
-  p: { bg: "bg-red-100", border: "border-red-400", text: "text-red-900" },
+  m: { bg: "bg-red-100", border: "border-red-400", text: "text-red-900" },
+  p: { bg: "bg-blue-100", border: "border-blue-400", text: "text-blue-900" },
   s: { bg: "bg-green-100", border: "border-green-400", text: "text-green-900" },
-  z: { bg: "bg-purple-100", border: "border-purple-400", text: "text-purple-900" },
+  z: { bg: "bg-gray-100", border: "border-gray-400", text: "text-gray-700" },
 }
 
 const HONOR_LABELS = ["東", "南", "西", "北", "白", "發", "中"]
 
 function tileKey(t: PhysicalTileInput): string {
   return `${t.suit}${t.rank}`
+}
+
+const SUIT_ORDER: Record<string, number> = { m: 0, p: 1, s: 2, z: 3 }
+
+function sortTiles(tiles: PhysicalTileInput[]): PhysicalTileInput[] {
+  return [...tiles].sort((a, b) => {
+    const sd = SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit]
+    return sd !== 0 ? sd : a.rank - b.rank
+  })
 }
 
 function countByType(tiles: PhysicalTileInput[]): Map<string, number> {
@@ -166,13 +175,22 @@ export function TilePicker({
           })}
         </div>
         {value.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-xs text-gray-400 hover:text-gray-600 underline shrink-0 mt-1 cursor-pointer"
-          >
-            クリア
-          </button>
+          <div className="flex gap-2 shrink-0 mt-1">
+            <button
+              type="button"
+              onClick={() => onChange(sortTiles(value))}
+              className="text-xs text-gray-400 hover:text-gray-600 underline cursor-pointer"
+            >
+              ソート
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-xs text-gray-400 hover:text-gray-600 underline cursor-pointer"
+            >
+              クリア
+            </button>
+          </div>
         )}
       </div>
     </div>
