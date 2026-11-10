@@ -41,27 +41,27 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 
 ---
 
-## Phase 3 — 局単位の期待値
+## Phase 3 — 局単位の期待値 ✅ 完了（2026-11-10）
 *概算工数: 13〜23人日*
 
 ### 目標
 和了確率・打点期待値・チップ期待値・押し引き判断を計算できるようにする。
 
 ### タスク
-- [ ] 和了確率計算実装
-- [ ] 打点期待値計算実装（打点分布）
-- [ ] チップ期待値計算実装
-- [ ] 放銃確率推定（現物・スジ・壁・ノーチャンス）
-- [ ] 局単位 EV 計算実装
-- [ ] 押し引き評価 API (`POST /api/analysis/push-fold`)
-- [ ] 単体テスト（HandEV, PushFold, DangerCalculator）
+- [x] 和了確率計算実装 (`mahjong_engine/analysis/win_probability.py`)
+- [x] 打点期待値計算実装 (`mahjong_engine/analysis/hand_ev.py`)
+- [x] チップ期待値計算実装（RoundEvCalculatorに統合）
+- [x] 放銃確率推定（現物・スジ・壁・ノーチャンス）(`mahjong_engine/analysis/danger_calculator.py`)
+- [x] 局単位 EV 計算実装 (`mahjong_engine/analysis/round_ev.py`)
+- [x] 押し引き評価 API (`POST /api/analysis/push-fold`)
+- [x] 単体テスト（WinProbability, HandEV, DangerCalculator）
 
 ### フロントエンド
-- [ ] ログイン画面 (`/login`)
-- [ ] 局面入力画面 (`/analysis`)
-- [ ] 分析結果画面 — 基本表示（シャンテン・受け入れ・打牌候補比較）(`/analysis/result`)
-- [ ] 分析履歴一覧画面 (`/history`)
-- [ ] 分析履歴詳細画面 (`/history/:id`)
+- [x] ログイン画面 (`/login`)
+- [x] 局面入力画面 (`/analysis`)
+- [x] 分析結果画面 — 基本表示（シャンテン・受け入れ・打牌候補比較）(`/analysis/result`)
+- [x] 分析履歴一覧画面 (`/history`)
+- [x] 分析履歴詳細画面 (`/history/:id`)
 
 ---
 

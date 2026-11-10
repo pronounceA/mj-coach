@@ -1,4 +1,5 @@
 import { RuleDefinition, RuleProfile } from "@/types/rule"
+import { GameStateInput, DiscardsResult, PushFoldResult, PhysicalTileInput } from "@/types/analysis"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
@@ -39,4 +40,25 @@ export const rulesApi = {
 
   delete: (id: string) =>
     request<void>(`/api/rules/${id}`, { method: "DELETE" }),
+}
+
+export const analysisApi = {
+  discards: (gameState: GameStateInput) =>
+    request<DiscardsResult>("/api/analysis/discards", {
+      method: "POST",
+      body: JSON.stringify({ game_state: gameState }),
+    }),
+  pushFold: (
+    gameState: GameStateInput,
+    pushDiscard: PhysicalTileInput,
+    foldDiscard: PhysicalTileInput
+  ) =>
+    request<PushFoldResult>("/api/analysis/push-fold", {
+      method: "POST",
+      body: JSON.stringify({
+        game_state: gameState,
+        push_discard: pushDiscard,
+        fold_discard: foldDiscard,
+      }),
+    }),
 }

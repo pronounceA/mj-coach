@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException
 
 from mahjong_engine.adapters.mahjong_repository_adapter import MahjongRepositoryAdapter
+from mahjong_engine.analysis.danger_calculator import DangerCalculator
+from mahjong_engine.analysis.hand_ev import HandEvCalculator
+from mahjong_engine.analysis.round_ev import PushFoldAnalyzer, RoundEvCalculator
+from mahjong_engine.analysis.win_probability import WinProbabilityCalculator
 from mahjong_engine.domain.game_state import GameState
 from mahjong_engine.domain.meld import Meld, MeldType
 from mahjong_engine.domain.rule_profile import RuleProfile
@@ -17,12 +21,18 @@ from schemas.analysis import (
     PhysicalTileSchema, MeldSchema,
 )
 from schemas.discard import DiscardsRequest, DiscardsResponse, DiscardCandidateResult
+from schemas.push_fold import PushFoldRequest, PushFoldResponse
 
 router = APIRouter()
 _adapter = MahjongRepositoryAdapter()
 _shanten_calc = ShantenCalculator(_adapter)
 _ukeire_calc = UkeireCalculator(_adapter)
 _score_calc = ScoreCalculator(_adapter)
+_win_prob_calc = WinProbabilityCalculator()
+_hand_ev_calc = HandEvCalculator(_adapter)
+_danger_calc = DangerCalculator()
+_round_ev_calc = RoundEvCalculator(_win_prob_calc, _hand_ev_calc, _danger_calc)
+_push_fold = PushFoldAnalyzer(_round_ev_calc, _danger_calc)
 
 
 def _to_physical_tile(s: PhysicalTileSchema) -> PhysicalTile:
@@ -148,17 +158,81 @@ async def discards(req: DiscardsRequest) -> DiscardsResponse:
         dora = dora_calc.count_dora(hand_after, melds_tiles, game_state.dora_indicators)
         chip_count = chip_calc.count_chips(hand_after, melds_tiles, is_win=True)
 
+        ukeire_count = sum(e["remaining_count"] for e in ukeire)
+        ev_data = _round_ev_calc.calculate(
+            shanten,
+            ukeire_count,
+            ukeire,
+            hand_after,
+            game_state.melds,
+            discard,
+            game_state,
+            rule,
+        )
+
         candidates.append(DiscardCandidateResult(
             discard=str(discard),
             shanten=shanten,
             ukeire=ukeire,
-            total_ukeire=sum(e["remaining_count"] for e in ukeire),
+            total_ukeire=ukeire_count,
             normal_dora=dora["normal_dora"],
             red_dora=dora["red_dora"],
             blue_dora=dora["blue_dora"],
             total_dora_han=dora["total_dora_han"],
             chip_count_on_win=chip_count,
+            win_probability=ev_data["win_probability"],
+            expected_han=ev_data["expected_han"],
+            expected_cost=ev_data["expected_cost"],
+            deal_in_probability=ev_data["deal_in_probability"],
+            round_ev=ev_data["round_ev"],
         ))
 
     candidates.sort(key=lambda c: (c.shanten, -c.total_ukeire))
     return DiscardsResponse(candidates=candidates)
+
+
+@router.post("/push-fold", response_model=PushFoldResponse)
+async def push_fold(req: PushFoldRequest) -> PushFoldResponse:
+    game_state = _to_game_state(req.game_state)
+    errors = game_state.validate()
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    rule = _default_rule()
+
+    push_tile = _to_physical_tile(req.push_discard)
+    fold_tile = _to_physical_tile(req.fold_discard)
+
+    full_hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+
+    # 押し牌を切った後の手牌と受け入れ情報
+    hand_after_push = [t for t in full_hand if t is not push_tile]
+    # push_tile が物理的に同一でない場合（schema 経由で来た牌）は tile_type で一致させる
+    if len(hand_after_push) == len(full_hand):
+        hand_after_push = [t for t in full_hand if t.tile_type != push_tile.tile_type][:len(full_hand) - 1]
+
+    shanten = _shanten_calc.calculate(hand_after_push, game_state.melds)
+    ukeire_entries = _ukeire_calc.calculate(hand_after_push, game_state.melds, game_state, rule)
+    ukeire_count = sum(e["remaining_count"] for e in ukeire_entries)
+
+    result = _push_fold.analyze(
+        hand=hand_after_push,
+        melds=game_state.melds,
+        shanten=shanten,
+        ukeire_count=ukeire_count,
+        ukeire_entries=ukeire_entries,
+        push_discard=push_tile,
+        fold_discard=fold_tile,
+        game_state=game_state,
+        rule=rule,
+    )
+
+    return PushFoldResponse(
+        recommendation=result["recommendation"],
+        push_ev=result["push_ev"],
+        fold_ev=result["fold_ev"],
+        ev_diff=result["ev_diff"],
+        push_win_probability=result["push_win_probability"],
+        push_deal_in_probability=result["push_deal_in_probability"],
+        fold_deal_in_probability=result["fold_deal_in_probability"],
+    )
