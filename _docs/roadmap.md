@@ -18,7 +18,7 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 
 ---
 
-## Phase 2 — 独自ルール対応 ✅ 完了（2026-11-09）
+## Phase 2 — 独自ルール対応 ✅ 完了（2026-11-10）
 *概算工数: 10〜18人日*
 
 ### 目標
@@ -33,6 +33,11 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 - [x] チップ精算モデル実装
 - [x] 打牌候補比較 API (`POST /api/analysis/discards`)
 - [x] 単体テスト（Dora, Chip, RuleProfile）
+
+### フロントエンド
+- [x] ルール管理一覧画面 (`/settings/rules`)
+- [x] ルール作成画面 (`/settings/rules/new`)
+- [x] ルール編集画面 (`/settings/rules/:id`)
 
 ---
 
@@ -50,6 +55,13 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 - [ ] 局単位 EV 計算実装
 - [ ] 押し引き評価 API (`POST /api/analysis/push-fold`)
 - [ ] 単体テスト（HandEV, PushFold, DangerCalculator）
+
+### フロントエンド
+- [ ] ログイン画面 (`/login`)
+- [ ] 局面入力画面 (`/analysis`)
+- [ ] 分析結果画面 — 基本表示（シャンテン・受け入れ・打牌候補比較）(`/analysis/result`)
+- [ ] 分析履歴一覧画面 (`/history`)
+- [ ] 分析履歴詳細画面 (`/history/:id`)
 
 ---
 
@@ -69,6 +81,9 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 - [ ] 半荘期待値 API (`POST /api/analysis/match-ev`)
 - [ ] シミュレーションテスト（再現性・収束・収支整合）
 
+### フロントエンド
+- [ ] 分析結果画面 — EV・シミュレーション表示拡張（信頼区間・相手モデル表示）(`/analysis/result`)
+
 ---
 
 ## Phase 5 — AIコーチ
@@ -80,9 +95,12 @@ MahjongRepository/mahjong を使って標準ルールの計算を動かす。
 ### タスク
 - [ ] AIコーチセッション管理 API (`POST /api/coach/sessions`)
 - [ ] 計算結果をプロンプトに変換するロジック実装
-- [ ] LLM 連携実装（Claude API）
+- [ ] LLM 連携実装（Ollama / Claude API 切り替え対応）
 - [ ] ユーザー反論時の再計算ロジック実装
-- [ ] フロントエンド：チャット UI 実装
+
+### フロントエンド
+- [ ] 分析結果画面 — AIコーチエリア追加（チャットUI・再計算結果インライン表示）(`/analysis/result`)
+- [ ] システム設定画面（LLMプロバイダー切り替え）(`/settings`)
 
 ---
 

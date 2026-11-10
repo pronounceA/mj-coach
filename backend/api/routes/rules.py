@@ -175,6 +175,18 @@ async def update_rule(
     return _to_response(profile, latest)
 
 
+@router.delete("/{rule_id}", status_code=204)
+async def delete_rule(rule_id: UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(RuleProfileModel).where(RuleProfileModel.id == rule_id)
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="ルールプロファイルが見つかりません")
+    await db.delete(profile)
+    await db.commit()
+
+
 @router.post("/{rule_id}/validate", response_model=ValidateResponse)
 async def validate_rule(rule_id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(

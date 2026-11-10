@@ -17,7 +17,9 @@ class RuleProfileModel(UUIDMixin, TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     versions: Mapped[list["RuleProfileVersionModel"]] = relationship(
-        back_populates="profile", order_by="RuleProfileVersionModel.version"
+        back_populates="profile",
+        order_by="RuleProfileVersionModel.version",
+        cascade="all, delete-orphan",
     )
 
 
