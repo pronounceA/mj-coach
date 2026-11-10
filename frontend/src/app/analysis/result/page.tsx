@@ -295,9 +295,9 @@ export default function ResultPage() {
               </button>
             ))}
             <div className="flex gap-2 ml-auto">
-              {candidates.slice(0, 5).map((c) => (
+              {candidates.slice(0, 5).map((c, i) => (
                 <button
-                  key={c.discard}
+                  key={`${c.discard}-${i}`}
                   type="button"
                   onClick={() => handleMatchEv(c, opponentModel)}
                   className={cn(

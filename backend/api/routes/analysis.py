@@ -261,9 +261,7 @@ async def match_ev(req: MatchEvRequest) -> MatchEvResponse:
     hand_after = full_hand[:idx] + full_hand[idx + 1:]
 
     shanten = _shanten_calc.calculate(hand_after, game_state.melds)
-    ukeire = _ukeire_calc.calculate_after_discard(
-        full_hand, discard, game_state.melds, game_state, rule
-    )
+    ukeire = _ukeire_calc.calculate(hand_after, game_state.melds, game_state, rule)
     ukeire_count = sum(e["remaining_count"] for e in ukeire)
 
     ev_data = _round_ev_calc.calculate(
