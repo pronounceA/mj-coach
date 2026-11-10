@@ -1,5 +1,12 @@
 import { RuleDefinition, RuleProfile } from "@/types/rule"
-import { GameStateInput, DiscardsResult, PushFoldResult, PhysicalTileInput } from "@/types/analysis"
+import {
+  GameStateInput,
+  DiscardsResult,
+  PushFoldResult,
+  PhysicalTileInput,
+  MatchEvResult,
+  MatchEvRequest,
+} from "@/types/analysis"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
@@ -60,5 +67,11 @@ export const analysisApi = {
         push_discard: pushDiscard,
         fold_discard: foldDiscard,
       }),
+    }),
+
+  matchEv: (req: MatchEvRequest) =>
+    request<MatchEvResult>("/api/analysis/match-ev", {
+      method: "POST",
+      body: JSON.stringify(req),
     }),
 }

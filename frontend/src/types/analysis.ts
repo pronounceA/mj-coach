@@ -66,3 +66,26 @@ export interface AnalysisHistoryEntry {
   game_state: GameStateInput
   candidates: DiscardCandidate[]
 }
+
+export type OpponentModelType = "random" | "basic" | "aggressive" | "defensive"
+
+export interface MatchEvRequest {
+  game_state: GameStateInput
+  discard: PhysicalTileInput
+  opponent_models: OpponentModelType[]
+  n_simulations: number
+}
+
+export interface MatchEvResult {
+  placement_distribution: {
+    first: number
+    second: number
+    third: number
+    fourth: number
+  }
+  mean_placement: number
+  mean_final_score: number
+  ci_low_95: number
+  ci_high_95: number
+  simulation_count: number
+}

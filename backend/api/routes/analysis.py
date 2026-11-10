@@ -14,6 +14,8 @@ from mahjong_engine.efficiency.ukeire_calculator import UkeireCalculator
 from mahjong_engine.rules.chip_calculator import ChipCalculator
 from mahjong_engine.rules.dora_calculator import DoraCalculator
 from mahjong_engine.scoring.score_calculator import ScoreCalculator
+from mahjong_engine.simulation.match_simulator import MatchSimulator
+from mahjong_engine.simulation.placement_calculator import PlacementCalculator
 from schemas.analysis import (
     ShantenRequest, ShantenResponse,
     UkeireRequest, UkeireResponse,
@@ -21,6 +23,7 @@ from schemas.analysis import (
     PhysicalTileSchema, MeldSchema,
 )
 from schemas.discard import DiscardsRequest, DiscardsResponse, DiscardCandidateResult
+from schemas.match_ev import MatchEvRequest, MatchEvResponse, PlacementDistribution
 from schemas.push_fold import PushFoldRequest, PushFoldResponse
 
 router = APIRouter()
@@ -33,6 +36,8 @@ _hand_ev_calc = HandEvCalculator(_adapter)
 _danger_calc = DangerCalculator()
 _round_ev_calc = RoundEvCalculator(_win_prob_calc, _hand_ev_calc, _danger_calc)
 _push_fold = PushFoldAnalyzer(_round_ev_calc, _danger_calc)
+_placement_calc = PlacementCalculator()
+_match_sim = MatchSimulator(_placement_calc)
 
 
 def _to_physical_tile(s: PhysicalTileSchema) -> PhysicalTile:
@@ -236,4 +241,57 @@ async def push_fold(req: PushFoldRequest) -> PushFoldResponse:
         push_win_probability=result["push_win_probability"],
         push_deal_in_probability=result["push_deal_in_probability"],
         fold_deal_in_probability=result["fold_deal_in_probability"],
+    )
+
+
+@router.post("/match-ev", response_model=MatchEvResponse)
+async def match_ev(req: MatchEvRequest) -> MatchEvResponse:
+    game_state = _to_game_state(req.game_state)
+    errors = game_state.validate()
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    rule = _default_rule()
+    discard = _to_physical_tile(req.discard)
+
+    full_hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+    idx = next((i for i, t in enumerate(full_hand) if t.tile_type == discard.tile_type), -1)
+    if idx < 0:
+        raise HTTPException(status_code=422, detail="discard が手牌に存在しません")
+    hand_after = full_hand[:idx] + full_hand[idx + 1:]
+
+    shanten = _shanten_calc.calculate(hand_after, game_state.melds)
+    ukeire = _ukeire_calc.calculate_after_discard(
+        full_hand, discard, game_state.melds, game_state, rule
+    )
+    ukeire_count = sum(e["remaining_count"] for e in ukeire)
+
+    ev_data = _round_ev_calc.calculate(
+        shanten, ukeire_count, ukeire,
+        hand_after, game_state.melds, discard, game_state, rule,
+    )
+
+    result = _match_sim.simulate(
+        game_state=game_state,
+        win_probability=ev_data["win_probability"],
+        expected_cost=ev_data["expected_cost"],
+        deal_in_probability=ev_data["deal_in_probability"],
+        opponent_types=req.opponent_models,
+        rule=rule,
+        n_simulations=req.n_simulations,
+    )
+
+    dist = result["placement_distribution"]
+    return MatchEvResponse(
+        placement_distribution=PlacementDistribution(
+            first=dist.get(1, 0.0),
+            second=dist.get(2, 0.0),
+            third=dist.get(3, 0.0),
+            fourth=dist.get(4, 0.0),
+        ),
+        mean_placement=result["mean_placement"],
+        mean_final_score=result["mean_final_score"],
+        ci_low_95=result["confidence_interval_95"][0],
+        ci_high_95=result["confidence_interval_95"][1],
+        simulation_count=result["simulation_count"],
     )

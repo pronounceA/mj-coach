@@ -5,7 +5,14 @@ import Link from "next/link"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { analysisApi } from "@/lib/api"
-import { GameStateInput, DiscardCandidate, AnalysisHistoryEntry, PushFoldResult } from "@/types/analysis"
+import {
+  GameStateInput,
+  DiscardCandidate,
+  AnalysisHistoryEntry,
+  PushFoldResult,
+  MatchEvResult,
+  OpponentModelType,
+} from "@/types/analysis"
 import { cn } from "@/lib/utils"
 
 interface AnalysisState {
@@ -24,11 +31,40 @@ function formatEv(n: number): string {
   return Math.round(n).toLocaleString("ja-JP")
 }
 
+const OPPONENT_LABELS: Record<OpponentModelType, string> = {
+  random: "ランダム",
+  basic: "標準",
+  aggressive: "攻撃的",
+  defensive: "守備的",
+}
+
+function PlacementBar({ label, pct, color }: { label: string; pct: number; color: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-6 text-gray-600 font-medium shrink-0">{label}</span>
+      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+        <div
+          className={cn("h-full rounded-full flex items-center justify-end pr-1.5", color)}
+          style={{ width: `${Math.max(pct * 100, 1)}%` }}
+        >
+          <span className="text-white text-[10px] font-bold leading-none">
+            {(pct * 100).toFixed(1)}%
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ResultPage() {
   const [state, setState] = useState<AnalysisState | null>(null)
   const [pushFoldResult, setPushFoldResult] = useState<PushFoldResult | null>(null)
   const [pushFoldLoading, setPushFoldLoading] = useState(false)
   const [historySaved, setHistorySaved] = useState(false)
+  const [matchEvResult, setMatchEvResult] = useState<MatchEvResult | null>(null)
+  const [matchEvLoading, setMatchEvLoading] = useState(false)
+  const [matchEvDiscard, setMatchEvDiscard] = useState<string | null>(null)
+  const [opponentModel, setOpponentModel] = useState<OpponentModelType>("basic")
 
   useEffect(() => {
     const raw = sessionStorage.getItem("analysis_state")
@@ -42,6 +78,12 @@ export default function ResultPage() {
       // ignore parse error
     }
   }, [])
+
+  useEffect(() => {
+    if (!state || state.candidates.length === 0) return
+    handleMatchEv(state.candidates[0], opponentModel)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
 
   useEffect(() => {
     if (!state || historySaved) return
@@ -60,6 +102,35 @@ export default function ResultPage() {
       // ignore storage errors
     }
   }, [state, historySaved])
+
+  async function handleMatchEv(candidate: DiscardCandidate, model: OpponentModelType) {
+    if (!state) return
+    const suit = candidate.discard.slice(-1) as "m" | "p" | "s" | "z"
+    const rank = parseInt(candidate.discard.replace(/[^0-9]/g, ""), 10)
+    const tile =
+      state.gameState.hand.find((t) => t.suit === suit && t.rank === rank) ??
+      (state.gameState.drawn_tile?.suit === suit && state.gameState.drawn_tile?.rank === rank
+        ? state.gameState.drawn_tile
+        : null)
+    if (!tile) return
+
+    setMatchEvLoading(true)
+    setMatchEvDiscard(candidate.discard)
+    setMatchEvResult(null)
+    try {
+      const result = await analysisApi.matchEv({
+        game_state: state.gameState,
+        discard: tile,
+        opponent_models: [model, model, model],
+        n_simulations: 500,
+      })
+      setMatchEvResult(result)
+    } catch {
+      // ignore errors
+    } finally {
+      setMatchEvLoading(false)
+    }
+  }
 
   async function handlePushFold() {
     if (!state || state.candidates.length < 2) return
@@ -200,6 +271,96 @@ export default function ResultPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      {/* Match EV simulation section */}
+      <Card title="半荘シミュレーション">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-gray-600 shrink-0">対戦相手レベル:</span>
+            {(["random", "basic", "aggressive", "defensive"] as OpponentModelType[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setOpponentModel(m)}
+                className={cn(
+                  "px-3 py-1 text-xs rounded-full border transition-colors cursor-pointer",
+                  opponentModel === m
+                    ? "bg-blue-600 border-blue-600 text-white"
+                    : "bg-white border-gray-300 text-gray-600 hover:border-blue-400"
+                )}
+              >
+                {OPPONENT_LABELS[m]}
+              </button>
+            ))}
+            <div className="flex gap-2 ml-auto">
+              {candidates.slice(0, 5).map((c) => (
+                <button
+                  key={c.discard}
+                  type="button"
+                  onClick={() => handleMatchEv(c, opponentModel)}
+                  className={cn(
+                    "px-2 py-1 text-xs rounded border transition-colors cursor-pointer font-mono",
+                    matchEvDiscard === c.discard
+                      ? "bg-blue-100 border-blue-400 text-blue-800"
+                      : "bg-white border-gray-300 text-gray-600 hover:border-blue-400"
+                  )}
+                >
+                  {c.discard}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {matchEvLoading && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+              <span className="animate-spin text-blue-500">⟳</span>
+              シミュレーション中… ({matchEvDiscard} を分析)
+            </div>
+          )}
+
+          {!matchEvLoading && matchEvResult && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div>
+                  <span className="text-gray-500">対象打牌: </span>
+                  <span className="font-mono font-bold text-gray-900">{matchEvDiscard}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">平均順位: </span>
+                  <span className="font-semibold">{matchEvResult.mean_placement.toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">期待精算点: </span>
+                  <span className={cn("font-semibold", matchEvResult.mean_final_score >= 0 ? "text-green-700" : "text-red-700")}>
+                    {Math.round(matchEvResult.mean_final_score).toLocaleString("ja-JP")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">95%CI: </span>
+                  <span className="font-semibold text-gray-700">
+                    [{Math.round(matchEvResult.ci_low_95).toLocaleString("ja-JP")},&nbsp;
+                    {Math.round(matchEvResult.ci_high_95).toLocaleString("ja-JP")}]
+                  </span>
+                </div>
+                <div className="text-gray-400 text-xs self-end">
+                  ({matchEvResult.simulation_count}回試行)
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <PlacementBar label="1位" pct={matchEvResult.placement_distribution.first}  color="bg-blue-500" />
+                <PlacementBar label="2位" pct={matchEvResult.placement_distribution.second} color="bg-green-500" />
+                <PlacementBar label="3位" pct={matchEvResult.placement_distribution.third}  color="bg-yellow-500" />
+                <PlacementBar label="4位" pct={matchEvResult.placement_distribution.fourth} color="bg-red-400" />
+              </div>
+            </div>
+          )}
+
+          {!matchEvLoading && !matchEvResult && (
+            <p className="text-sm text-gray-400 py-2">データを読み込んでいます…</p>
+          )}
         </div>
       </Card>
 
