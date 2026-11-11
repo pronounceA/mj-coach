@@ -28,7 +28,7 @@ class MatchSimulator:
         deal_in_probability: float,
         opponent_types: list[str],
         rule: RuleProfile,
-        n_simulations: int = 500,
+        n_simulations: int = 2000,
         seed: int | None = None,
     ) -> dict:
         """半荘シミュレーションを実行し、自家の精算点分布を返す。

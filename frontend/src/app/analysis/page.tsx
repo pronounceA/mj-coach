@@ -48,7 +48,6 @@ export default function AnalysisPage() {
   const [honba, setHonba] = useState(0)
   const [junme, setJunme] = useState(1)
   const [riichiSticks, setRiichiSticks] = useState(0)
-  const [isDealer, setIsDealer] = useState(false)
   const [playerSeat, setPlayerSeat] = useState(0)
   const [scores, setScores] = useState([25000, 25000, 25000, 25000])
   const [ruleVersionId, setRuleVersionId] = useState("00000000-0000-0000-0000-000000000000")
@@ -102,7 +101,7 @@ export default function AnalysisPage() {
       hand_number: handNumber,
       honba,
       riichi_sticks: riichiSticks,
-      dealer: isDealer ? playerSeat : (playerSeat + 1) % 4,
+      dealer: 0,
       player_seat: playerSeat,
       junme,
       remaining_hands: null,
@@ -131,7 +130,7 @@ export default function AnalysisPage() {
       .map((r) => ({ value: r.latest_version!.id, label: r.name })),
   ]
 
-  const seatLabels = ["東家 (0)", "南家 (1)", "西家 (2)", "北家 (3)"]
+  const seatLabels = ["東家", "南家", "西家", "北家"]
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -197,14 +196,12 @@ export default function AnalysisPage() {
             onChange={(e) => setHandNumber(Number(e.target.value))}
             options={[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n}局` }))}
           />
-          <Input
+          <Select
             id="junme"
             label="順目"
-            type="number"
-            min={1}
-            max={18}
-            value={junme}
+            value={String(junme)}
             onChange={(e) => setJunme(Number(e.target.value))}
+            options={Array.from({ length: 18 }, (_, i) => ({ value: String(i + 1), label: `${i + 1}巡目` }))}
           />
           <Input
             id="honba"
@@ -222,18 +219,6 @@ export default function AnalysisPage() {
             value={riichiSticks}
             onChange={(e) => setRiichiSticks(Number(e.target.value))}
           />
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">親</span>
-            <label className="flex items-center gap-2 h-9 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isDealer}
-                onChange={(e) => setIsDealer(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600"
-              />
-              <span className="text-sm text-gray-700">自分が親</span>
-            </label>
-          </div>
           <Select
             id="player-seat"
             label="自席"

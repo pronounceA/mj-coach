@@ -83,7 +83,6 @@ function HistoryDetailPageInner() {
 
   const roundLabel = `${ROUND_WIND_LABEL[gs.round_wind] ?? gs.round_wind}${gs.hand_number}局`
   const honbaLabel = gs.honba > 0 ? ` ${gs.honba}本場` : ""
-  const dealerLabel = SEAT_LABELS[gs.dealer] ?? String(gs.dealer)
   const seatLabel = SEAT_LABELS[gs.player_seat] ?? String(gs.player_seat)
 
   return (
@@ -129,10 +128,6 @@ function HistoryDetailPageInner() {
             <div>
               <dt className="text-gray-500">供託</dt>
               <dd className="font-semibold">{gs.riichi_sticks}本</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">親</dt>
-              <dd className="font-semibold">{dealerLabel}家</dd>
             </div>
             <div>
               <dt className="text-gray-500">自席</dt>

@@ -7,7 +7,7 @@ class MatchEvRequest(BaseModel):
     game_state: GameStateSchema
     discard: PhysicalTileSchema
     opponent_models: list[str] = Field(default=["basic", "basic", "basic"])
-    n_simulations: int = Field(default=500, ge=50, le=2000)
+    n_simulations: int = Field(default=2000, ge=50, le=5000)
 
 
 class PlacementDistribution(BaseModel):

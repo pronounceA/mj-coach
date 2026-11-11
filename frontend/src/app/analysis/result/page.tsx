@@ -131,7 +131,7 @@ export default function ResultPage() {
         game_state: state.gameState,
         discard: tile,
         opponent_models: [model, model, model],
-        n_simulations: 500,
+        n_simulations: 2000,
       })
       setMatchEvResult(result)
     } catch {
@@ -191,7 +191,6 @@ export default function ResultPage() {
 
   const roundLabel = `${ROUND_WIND_LABEL[gameState.round_wind] ?? gameState.round_wind}${gameState.hand_number}局`
   const honbaLabel = gameState.honba > 0 ? ` ${gameState.honba}本場` : ""
-  const dealerLabel = SEAT_LABELS[gameState.dealer] ?? String(gameState.dealer)
   const seatLabel = SEAT_LABELS[gameState.player_seat] ?? String(gameState.player_seat)
 
   return (
@@ -219,10 +218,6 @@ export default function ResultPage() {
           <div>
             <dt className="text-gray-500">供託</dt>
             <dd className="font-semibold">{gameState.riichi_sticks}本</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">親</dt>
-            <dd className="font-semibold">{dealerLabel}家</dd>
           </div>
           <div>
             <dt className="text-gray-500">自席</dt>
