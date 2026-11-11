@@ -48,10 +48,9 @@ export default function AnalysisPage() {
   const [honba, setHonba] = useState(0)
   const [junme, setJunme] = useState(1)
   const [riichiSticks, setRiichiSticks] = useState(0)
-  const [dealer, setDealer] = useState(0)
+  const [isDealer, setIsDealer] = useState(false)
   const [playerSeat, setPlayerSeat] = useState(0)
   const [scores, setScores] = useState([25000, 25000, 25000, 25000])
-  const [chips, setChips] = useState([0, 0, 0, 0])
   const [ruleVersionId, setRuleVersionId] = useState("00000000-0000-0000-0000-000000000000")
   const [rules, setRules] = useState<RuleProfile[]>([])
   const [loading, setLoading] = useState(false)
@@ -67,12 +66,6 @@ export default function AnalysisPage() {
     const next = [...scores]
     next[index] = parseInt(val, 10) || 0
     setScores(next)
-  }
-
-  function handleChipChange(index: number, val: string) {
-    const next = [...chips]
-    next[index] = parseInt(val, 10) || 0
-    setChips(next)
   }
 
   function handleRandomHand() {
@@ -105,12 +98,11 @@ export default function AnalysisPage() {
       discards: [[], [], [], []],
       dora_indicators: doraIndicators,
       scores,
-      chips,
       round_wind: roundWind,
       hand_number: handNumber,
       honba,
       riichi_sticks: riichiSticks,
-      dealer,
+      dealer: isDealer ? playerSeat : (playerSeat + 1) % 4,
       player_seat: playerSeat,
       junme,
       remaining_hands: null,
@@ -230,13 +222,18 @@ export default function AnalysisPage() {
             value={riichiSticks}
             onChange={(e) => setRiichiSticks(Number(e.target.value))}
           />
-          <Select
-            id="dealer"
-            label="親"
-            value={String(dealer)}
-            onChange={(e) => setDealer(Number(e.target.value))}
-            options={[0, 1, 2, 3].map((n) => ({ value: String(n), label: seatLabels[n] }))}
-          />
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">親</span>
+            <label className="flex items-center gap-2 h-9 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isDealer}
+                onChange={(e) => setIsDealer(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600"
+              />
+              <span className="text-sm text-gray-700">自分が親</span>
+            </label>
+          </div>
           <Select
             id="player-seat"
             label="自席"
@@ -257,21 +254,6 @@ export default function AnalysisPage() {
               type="number"
               value={score}
               onChange={(e) => handleScoreChange(i, e.target.value)}
-            />
-          ))}
-        </div>
-      </Card>
-
-      <Card title="チップ">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {chips.map((chip, i) => (
-            <Input
-              key={i}
-              id={`chip-${i}`}
-              label={`${["東", "南", "西", "北"][i]}家`}
-              type="number"
-              value={chip}
-              onChange={(e) => handleChipChange(i, e.target.value)}
             />
           ))}
         </div>

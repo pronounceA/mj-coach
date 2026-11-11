@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = '/app';
+const SRC_ROOT = '/app-host';
+const DST_ROOT = '/app';
+const SIGNAL = '/tmp/reload_signal';
 const IGNORE = new Set(['node_modules', '.next', '.git', '.turbo']);
 
 function walk(dir, files) {
@@ -19,23 +21,43 @@ function walk(dir, files) {
 }
 
 const mtimes = new Map();
-walk(ROOT).forEach(function(f) {
-  try { mtimes.set(f, fs.statSync(f).mtimeMs); } catch (e) {}
+walk(SRC_ROOT).forEach(function(f) {
+  try { mtimes.set(f, fs.statSync(f).mtimeMs); } catch {}
 });
+
+try { fs.writeFileSync(SIGNAL, '0'); } catch {}
 
 process.stdout.write('[dev-watch] polling started\n');
 
+let debounceTimer = null;
+
+function signalReload() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(function() {
+    try {
+      fs.writeFileSync(SIGNAL, String(Date.now()));
+      process.stdout.write('[dev-watch] reload signal sent\n');
+    } catch {}
+    debounceTimer = null;
+  }, 100);
+}
+
 setInterval(function() {
-  walk(ROOT).forEach(function(f) {
+  walk(SRC_ROOT).forEach(function(f) {
     try {
       const mtime = fs.statSync(f).mtimeMs;
       if (mtimes.get(f) !== mtime) {
-        const buf = fs.readFileSync(f);
-        fs.writeFileSync(f, buf);
-        // 書き戻し後の mtime を記録してループ防止
-        mtimes.set(f, fs.statSync(f).mtimeMs);
-        process.stdout.write('[dev-watch] changed: ' + f + '\n');
+        mtimes.set(f, mtime);
+
+        const relPath = path.relative(SRC_ROOT, f);
+        const dstPath = path.join(DST_ROOT, relPath);
+
+        fs.mkdirSync(path.dirname(dstPath), { recursive: true });
+        fs.writeFileSync(dstPath, fs.readFileSync(f));
+
+        process.stdout.write('[dev-watch] synced: ' + relPath + '\n');
+        signalReload();
       }
-    } catch (e) {}
+    } catch {}
   });
 }, 500);

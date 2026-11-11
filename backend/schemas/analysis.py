@@ -22,7 +22,6 @@ class GameStateSchema(BaseModel):
     discards: list[list[PhysicalTileSchema]] = [[], [], [], []]
     dora_indicators: list[PhysicalTileSchema] = []
     scores: list[int]
-    chips: list[int]
     round_wind: str
     hand_number: int
     honba: int
@@ -33,7 +32,7 @@ class GameStateSchema(BaseModel):
     remaining_hands: int | None = None
     rule_version_id: UUID
 
-    @field_validator("scores", "chips")
+    @field_validator("scores")
     @classmethod
     def must_be_four(cls, v: list) -> list:
         if len(v) != 4:

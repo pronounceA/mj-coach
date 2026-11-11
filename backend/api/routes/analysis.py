@@ -62,7 +62,6 @@ def _to_game_state(s) -> GameState:
         discards=[[_to_physical_tile(t) for t in row] for row in s.discards],
         dora_indicators=[_to_physical_tile(t) for t in s.dora_indicators],
         scores=s.scores,
-        chips=s.chips,
         round_wind=s.round_wind,
         hand_number=s.hand_number,
         honba=s.honba,

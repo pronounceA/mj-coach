@@ -1,8 +1,6 @@
 "use client"
 
-export const dynamic = "force-dynamic"
-
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/Card"
@@ -32,7 +30,7 @@ function formatTimestamp(iso: string): string {
   return `${y}/${mo}/${day} ${h}:${mi}:${s}`
 }
 
-export default function HistoryDetailPage() {
+function HistoryDetailPageInner() {
   const params = useParams()
   const id = params?.id
 
@@ -208,5 +206,13 @@ export default function HistoryDetailPage() {
         </Card>
       </main>
     </div>
+  )
+}
+
+export default function HistoryDetailPage() {
+  return (
+    <Suspense>
+      <HistoryDetailPageInner />
+    </Suspense>
   )
 }

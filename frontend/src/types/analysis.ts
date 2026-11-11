@@ -18,7 +18,6 @@ export interface GameStateInput {
   discards: PhysicalTileInput[][]
   dora_indicators: PhysicalTileInput[]
   scores: number[]
-  chips: number[]
   round_wind: string
   hand_number: number
   honba: number

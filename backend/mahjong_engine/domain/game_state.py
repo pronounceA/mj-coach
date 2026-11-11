@@ -9,7 +9,6 @@ from mahjong_engine.domain.tile import PhysicalTile, TileType, TileVariant, Suit
 class GameState:
     hand: list[PhysicalTile]
     scores: list[int]
-    chips: list[int]
     round_wind: str
     hand_number: int
     honba: int
@@ -46,8 +45,6 @@ class GameState:
 
         if len(self.scores) != 4:
             errors.append("scoresは4要素必要")
-        if len(self.chips) != 4:
-            errors.append("chipsは4要素必要")
         if not (0 <= self.dealer <= 3):
             errors.append(f"dealerは0〜3: {self.dealer}")
         if not (0 <= self.player_seat <= 3):

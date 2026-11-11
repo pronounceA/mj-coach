@@ -1,15 +1,13 @@
 "use client"
 
-export const dynamic = "force-dynamic"
-
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { RuleForm } from "@/components/rules/RuleForm"
 import { rulesApi } from "@/lib/api"
 import { RuleProfile, RuleDefinition } from "@/types/rule"
 
-export default function EditRulePage() {
+function EditRulePageInner() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
@@ -82,5 +80,13 @@ export default function EditRulePage() {
         saving={saving}
       />
     </div>
+  )
+}
+
+export default function EditRulePage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-500">読み込み中...</p>}>
+      <EditRulePageInner />
+    </Suspense>
   )
 }
