@@ -25,6 +25,7 @@ export interface GameStateInput {
   riichi_sticks: number
   dealer: number
   player_seat: number
+  junme: number | null
   remaining_hands: number | null
   rule_version_id: string
 }

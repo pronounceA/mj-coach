@@ -3,6 +3,17 @@ from __future__ import annotations
 from mahjong_engine.domain.game_state import GameState
 from mahjong_engine.domain.tile import PhysicalTile, Suit, TileType
 
+def _junme_scale(game_state) -> float:
+    """順目に応じた危険度スケール係数を返す。
+
+    順目10を基準(1.0)とし、序盤は低く終盤は高くなる。
+    junme未設定時は1.0（変動なし）。
+    """
+    if game_state.junme is None:
+        return 1.0
+    return max(0.2, min(2.0, game_state.junme / 10.0))
+
+
 # 筋マップ: あるランクを捨てていた場合、安全になるランクのリスト
 _SUJI_MAP: dict[int, list[int]] = {
     1: [4],
@@ -58,16 +69,16 @@ class DangerCalculator:
         # 全体で見えている枚数
         total_seen = game_state.count_tile_type(tile_type)
 
-        # 4枚全部見えている（ノーチャンス）
+        # 4枚全部見えている（ノーチャンス）: テンパイ有無に関わらず当たらない
         if total_seen >= 4:
             return 0.01
 
+        scale = _junme_scale(game_state)
+
         # 字牌の場合
         if tile_type.suit == Suit.HONOR:
-            if total_seen <= 1:
-                return 0.04
-            else:
-                return 0.02
+            base = 0.04 if total_seen <= 1 else 0.02
+            return base * scale
 
         # 数牌：筋チェック
         rank = tile_type.rank
@@ -77,19 +88,21 @@ class DangerCalculator:
         for suji_rank in suji_ranks:
             suji_tile_type = TileType(suit=suit, rank=suji_rank)
             if suji_tile_type in opponent_discard_tile_types:
-                return 0.04
+                return 0.04 * scale
 
         # 壁チェック（隣接する3枚以上の同一スートの牌が見えているか）
         if _is_kabe(tile_type, game_state):
-            return 0.03
+            return 0.03 * scale
 
         # 外側・内側による基本危険度
         if rank in (1, 9):
-            return 0.06
+            base = 0.06
         elif rank in (2, 8):
-            return 0.07
+            base = 0.07
         else:
-            return 0.10
+            base = 0.10
+
+        return base * scale
 
     def calculate_total(
         self,

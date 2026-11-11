@@ -46,6 +46,7 @@ export default function AnalysisPage() {
   const [roundWind, setRoundWind] = useState<"E" | "S">("E")
   const [handNumber, setHandNumber] = useState(1)
   const [honba, setHonba] = useState(0)
+  const [junme, setJunme] = useState(1)
   const [riichiSticks, setRiichiSticks] = useState(0)
   const [dealer, setDealer] = useState(0)
   const [playerSeat, setPlayerSeat] = useState(0)
@@ -111,6 +112,7 @@ export default function AnalysisPage() {
       riichi_sticks: riichiSticks,
       dealer,
       player_seat: playerSeat,
+      junme,
       remaining_hands: null,
       rule_version_id: ruleVersionId,
     }
@@ -202,6 +204,15 @@ export default function AnalysisPage() {
             value={String(handNumber)}
             onChange={(e) => setHandNumber(Number(e.target.value))}
             options={[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n}局` }))}
+          />
+          <Input
+            id="junme"
+            label="順目"
+            type="number"
+            min={1}
+            max={18}
+            value={junme}
+            onChange={(e) => setJunme(Number(e.target.value))}
           />
           <Input
             id="honba"

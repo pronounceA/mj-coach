@@ -29,6 +29,7 @@ class GameStateSchema(BaseModel):
     riichi_sticks: int
     dealer: int
     player_seat: int
+    junme: int | None = None
     remaining_hands: int | None = None
     rule_version_id: UUID
 

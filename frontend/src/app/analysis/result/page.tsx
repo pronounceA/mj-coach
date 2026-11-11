@@ -22,6 +22,15 @@ interface AnalysisState {
 
 const ROUND_WIND_LABEL: Record<string, string> = { E: "東", S: "南" }
 const SEAT_LABELS = ["東", "南", "西", "北"]
+const HONOR_LABELS = ["東", "南", "西", "北", "白", "發", "中"]
+
+function formatTile(discard: string): string {
+  if (discard.endsWith("z")) {
+    const rank = parseInt(discard, 10)
+    if (rank >= 1 && rank <= 7) return HONOR_LABELS[rank - 1]
+  }
+  return discard
+}
 
 function formatPct(n: number): string {
   return (n * 100).toFixed(1) + "%"
@@ -201,6 +210,12 @@ export default function ResultPage() {
             <dt className="text-gray-500">局</dt>
             <dd className="font-semibold">{roundLabel}{honbaLabel}</dd>
           </div>
+          {gameState.junme != null && (
+            <div>
+              <dt className="text-gray-500">巡目</dt>
+              <dd className="font-semibold">{gameState.junme}巡目</dd>
+            </div>
+          )}
           <div>
             <dt className="text-gray-500">供託</dt>
             <dd className="font-semibold">{gameState.riichi_sticks}本</dd>
@@ -248,7 +263,7 @@ export default function ResultPage() {
                   )}
                 >
                   <td className="px-3 py-2">
-                    <span className="font-mono font-bold text-gray-900">{c.discard}</span>
+                    <span className="font-mono font-bold text-gray-900">{formatTile(c.discard)}</span>
                     {i === 0 && (
                       <span className="ml-2 text-xs text-blue-600 font-normal">推奨</span>
                     )}
@@ -307,7 +322,7 @@ export default function ResultPage() {
                       : "bg-white border-gray-300 text-gray-600 hover:border-blue-400"
                   )}
                 >
-                  {c.discard}
+                  {formatTile(c.discard)}
                 </button>
               ))}
             </div>
@@ -316,7 +331,7 @@ export default function ResultPage() {
           {matchEvLoading && (
             <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
               <span className="animate-spin text-blue-500">⟳</span>
-              シミュレーション中… ({matchEvDiscard} を分析)
+              シミュレーション中… ({matchEvDiscard ? formatTile(matchEvDiscard) : ""} を分析)
             </div>
           )}
 
@@ -325,7 +340,7 @@ export default function ResultPage() {
               <div className="flex flex-wrap gap-6 text-sm">
                 <div>
                   <span className="text-gray-500">対象打牌: </span>
-                  <span className="font-mono font-bold text-gray-900">{matchEvDiscard}</span>
+                  <span className="font-mono font-bold text-gray-900">{matchEvDiscard ? formatTile(matchEvDiscard) : ""}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">平均順位: </span>

@@ -69,6 +69,7 @@ def _to_game_state(s) -> GameState:
         riichi_sticks=s.riichi_sticks,
         dealer=s.dealer,
         player_seat=s.player_seat,
+        junme=s.junme,
         remaining_hands=s.remaining_hands,
         rule_version_id=s.rule_version_id,
     )

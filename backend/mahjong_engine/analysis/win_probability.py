@@ -24,9 +24,12 @@ class WinProbabilityCalculator:
         Returns:
             推定和了確率（0.0〜1.0）
         """
-        remaining_draws = max(
-            0, 70 - sum(len(d) for d in game_state.discards)
-        )
+        if game_state.junme is not None:
+            remaining_draws = max(0, 70 - game_state.junme * 4)
+        else:
+            remaining_draws = max(
+                0, 70 - sum(len(d) for d in game_state.discards)
+            )
         unseen = max(0, self.TOTAL_TILES - len(game_state.all_known_tiles()))
 
         return self._win_prob(shanten, ukeire_count, remaining_draws, unseen, depth=0)

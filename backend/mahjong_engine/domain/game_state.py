@@ -21,6 +21,7 @@ class GameState:
     melds: list[Meld] = field(default_factory=list)
     discards: list[list[PhysicalTile]] = field(default_factory=lambda: [[], [], [], []])
     dora_indicators: list[PhysicalTile] = field(default_factory=list)
+    junme: int | None = None
     remaining_hands: int | None = None
 
     def validate(self) -> list[str]:
