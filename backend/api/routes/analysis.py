@@ -150,6 +150,13 @@ async def discards(req: DiscardsRequest) -> DiscardsResponse:
     chip_calc = ChipCalculator(rule)
 
     full_hand = game_state.hand + ([game_state.drawn_tile] if game_state.drawn_tile else [])
+    total_tiles = len(full_hand) + sum(len(m.tiles) for m in game_state.melds)
+    if total_tiles != 14:
+        raise HTTPException(
+            status_code=422,
+            detail=f"打牌分析には14枚（手牌+ツモ牌）が必要です（現在: {total_tiles}枚）。ツモ牌を入力してください。",
+        )
+
     melds_tiles = [t for m in game_state.melds for t in m.tiles]
     candidates = []
 

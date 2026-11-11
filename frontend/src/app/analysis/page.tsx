@@ -12,7 +12,7 @@ import { analysisApi } from "@/lib/api"
 import { PhysicalTileInput, GameStateInput } from "@/types/analysis"
 import { RuleProfile } from "@/types/rule"
 
-function generateRandomHand(): PhysicalTileInput[] {
+function generateRandomHand(): { hand: PhysicalTileInput[]; drawnTile: PhysicalTileInput } {
   const allTiles: PhysicalTileInput[] = []
   for (const suit of ["m", "p", "s"] as const) {
     for (let rank = 1; rank <= 9; rank++) {
@@ -30,7 +30,11 @@ function generateRandomHand(): PhysicalTileInput[] {
     const j = Math.floor(Math.random() * (i + 1))
     ;[allTiles[i], allTiles[j]] = [allTiles[j], allTiles[i]]
   }
-  return allTiles.slice(0, 13).map((t, i) => ({ ...t, physical_id: `hand_${i}` }))
+  const dealt = allTiles.slice(0, 14)
+  return {
+    hand: dealt.slice(0, 13).map((t, i) => ({ ...t, physical_id: `hand_${i}` })),
+    drawnTile: { ...dealt[13], physical_id: "drawn_0" },
+  }
 }
 
 export default function AnalysisPage() {
@@ -71,8 +75,9 @@ export default function AnalysisPage() {
   }
 
   function handleRandomHand() {
-    setHand(generateRandomHand())
-    setDrawnTile([])
+    const { hand: newHand, drawnTile: newDrawn } = generateRandomHand()
+    setHand(newHand)
+    setDrawnTile([newDrawn])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,6 +86,14 @@ export default function AnalysisPage() {
 
     if (hand.length < 1) {
       setError("手牌を入力してください。")
+      return
+    }
+    if (hand.length === 13 && drawnTile.length === 0) {
+      setError("手牌が13枚の場合、ツモ牌を入力してください。")
+      return
+    }
+    if (hand.length + (drawnTile.length > 0 ? 1 : 0) > 14) {
+      setError("手牌 + ツモ牌は14枚以内にしてください。")
       return
     }
 
@@ -141,7 +154,7 @@ export default function AnalysisPage() {
         </div>
       )}
 
-      <Card title="手牌 (最大13枚)">
+      <Card title="手牌 (13枚)">
         <TilePicker
           value={hand}
           onChange={setHand}
@@ -151,7 +164,7 @@ export default function AnalysisPage() {
         />
       </Card>
 
-      <Card title="ツモ牌 (任意・1枚)">
+      <Card title="ツモ牌 (必須・1枚)">
         <TilePicker
           value={drawnTile}
           onChange={(tiles) => setDrawnTile(tiles.slice(-1))}
