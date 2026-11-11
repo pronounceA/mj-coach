@@ -11,7 +11,10 @@ RUN npm ci
 
 FROM dependencies AS development
 
-CMD ["npm", "run", "dev"]
+COPY dev-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
+RUN chmod +x /usr/local/bin/dev-entrypoint.sh
+
+CMD ["/usr/local/bin/dev-entrypoint.sh"]
 
 
 FROM dependencies AS builder
