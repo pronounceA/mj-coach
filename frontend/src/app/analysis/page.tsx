@@ -53,6 +53,7 @@ export default function AnalysisPage() {
   const [ruleVersionId, setRuleVersionId] = useState("00000000-0000-0000-0000-000000000000")
   const [rules, setRules] = useState<RuleProfile[]>([])
   const [loading, setLoading] = useState(false)
+  const [generatingShanten, setGeneratingShanten] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -71,6 +72,19 @@ export default function AnalysisPage() {
     const { hand: newHand, drawnTile: newDrawn } = generateRandomHand()
     setHand(newHand)
     setDrawnTile([newDrawn])
+  }
+
+  async function handleGenerateShanten(shanten: number) {
+    setGeneratingShanten(shanten)
+    try {
+      const result = await analysisApi.generateHand(shanten)
+      setHand(result.hand)
+      setDrawnTile([result.drawn_tile])
+    } catch {
+      setError(`${shanten}シャンテンの手牌生成に失敗しました。`)
+    } finally {
+      setGeneratingShanten(null)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -136,9 +150,17 @@ export default function AnalysisPage() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">局面入力</h2>
-        <Button type="button" variant="secondary" onClick={handleRandomHand}>
-          ランダム生成
-        </Button>
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" onClick={handleRandomHand} disabled={generatingShanten !== null}>
+            ランダム生成
+          </Button>
+          <Button type="button" variant="secondary" loading={generatingShanten === 1} disabled={generatingShanten !== null} onClick={() => handleGenerateShanten(1)}>
+            1シャンテン
+          </Button>
+          <Button type="button" variant="secondary" loading={generatingShanten === 2} disabled={generatingShanten !== null} onClick={() => handleGenerateShanten(2)}>
+            2シャンテン
+          </Button>
+        </div>
       </div>
 
       {error && (

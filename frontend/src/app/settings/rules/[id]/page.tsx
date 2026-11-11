@@ -59,12 +59,6 @@ function EditRulePageInner() {
         <h2 className="text-xl font-semibold text-gray-900">ルール編集: {rule.name}</h2>
       </div>
 
-      {rule.latest_version && (
-        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700">
-          現在 v{rule.latest_version.version} — 保存すると新しいバージョンとして作成されます
-        </div>
-      )}
-
       {saveError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
           {saveError}

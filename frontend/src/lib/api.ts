@@ -6,6 +6,7 @@ import {
   PhysicalTileInput,
   MatchEvResult,
   MatchEvRequest,
+  GenerateHandResult,
 } from "@/types/analysis"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
@@ -74,4 +75,7 @@ export const analysisApi = {
       method: "POST",
       body: JSON.stringify(req),
     }),
+
+  generateHand: (targetShanten: number) =>
+    request<GenerateHandResult>(`/api/analysis/generate-hand?target_shanten=${targetShanten}`),
 }

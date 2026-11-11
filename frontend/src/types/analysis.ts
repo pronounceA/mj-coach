@@ -46,6 +46,11 @@ export interface DiscardCandidate {
   round_ev: number
 }
 
+export interface GenerateHandResult {
+  hand: PhysicalTileInput[]
+  drawn_tile: PhysicalTileInput
+}
+
 export interface DiscardsResult {
   candidates: DiscardCandidate[]
 }

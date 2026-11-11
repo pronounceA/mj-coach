@@ -77,3 +77,8 @@ class ScoringResponse(BaseModel):
     blue_tile_count: int
     chip_count: int
     error: str | None = None
+
+
+class GenerateHandResponse(BaseModel):
+    hand: list[PhysicalTileSchema]
+    drawn_tile: PhysicalTileSchema

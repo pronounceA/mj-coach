@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+import random as _random
+
+from fastapi import APIRouter, HTTPException, Query
 
 from mahjong_engine.adapters.mahjong_repository_adapter import MahjongRepositoryAdapter
 from mahjong_engine.analysis.danger_calculator import DangerCalculator
@@ -20,6 +22,7 @@ from schemas.analysis import (
     ShantenRequest, ShantenResponse,
     UkeireRequest, UkeireResponse,
     ScoringRequest, ScoringResponse,
+    GenerateHandResponse,
     PhysicalTileSchema, MeldSchema,
 )
 from schemas.discard import DiscardsRequest, DiscardsResponse, DiscardCandidateResult
@@ -76,6 +79,45 @@ def _to_game_state(s) -> GameState:
 
 def _default_rule() -> RuleProfile:
     return RuleProfile(rule_name="default")
+
+
+@router.get("/generate-hand", response_model=GenerateHandResponse)
+def generate_hand(target_shanten: int = Query(1, ge=0, le=5)) -> GenerateHandResponse:
+    all_tiles: list[PhysicalTile] = []
+    for suit_str in ["m", "p", "s"]:
+        for rank in range(1, 10):
+            for i in range(4):
+                all_tiles.append(PhysicalTile(
+                    TileType(suit=Suit(suit_str), rank=rank),
+                    TileVariant.NORMAL,
+                    f"{rank}{suit_str}_{i}",
+                ))
+    for rank in range(1, 8):
+        for i in range(4):
+            all_tiles.append(PhysicalTile(
+                TileType(suit=Suit("z"), rank=rank),
+                TileVariant.NORMAL,
+                f"{rank}z_{i}",
+            ))
+
+    for _ in range(500):
+        _random.shuffle(all_tiles)
+        hand_13 = all_tiles[:13]
+        drawn = all_tiles[13]
+        if _shanten_calc.calculate(hand_13, []) == target_shanten:
+            def _s(t: PhysicalTile, pid: str) -> PhysicalTileSchema:
+                return PhysicalTileSchema(
+                    suit=t.tile_type.suit.value,
+                    rank=t.tile_type.rank,
+                    variant=t.variant.value,
+                    physical_id=pid,
+                )
+            return GenerateHandResponse(
+                hand=[_s(t, f"hand_{i}") for i, t in enumerate(hand_13)],
+                drawn_tile=_s(drawn, "drawn_0"),
+            )
+
+    raise HTTPException(status_code=500, detail="手牌生成に失敗しました")
 
 
 @router.post("/shanten", response_model=ShantenResponse)
