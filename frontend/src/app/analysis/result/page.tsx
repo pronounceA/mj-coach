@@ -14,6 +14,7 @@ import {
   OpponentModelType,
 } from "@/types/analysis"
 import { cn } from "@/lib/utils"
+import { useFooterHand } from "@/components/analysis/HandFooter"
 
 interface AnalysisState {
   gameState: GameStateInput
@@ -74,6 +75,7 @@ export default function ResultPage() {
   const [matchEvLoading, setMatchEvLoading] = useState(false)
   const [matchEvDiscard, setMatchEvDiscard] = useState<string | null>(null)
   const [opponentModel, setOpponentModel] = useState<OpponentModelType>("basic")
+  const { setFooterHand } = useFooterHand()
 
   useEffect(() => {
     const raw = sessionStorage.getItem("analysis_state")
@@ -83,10 +85,15 @@ export default function ResultPage() {
       // Sort by round_ev desc
       const sorted = [...parsed.candidates].sort((a, b) => b.round_ev - a.round_ev)
       setState({ ...parsed, candidates: sorted })
+      setFooterHand({
+        hand: parsed.gameState.hand,
+        drawnTile: parsed.gameState.drawn_tile,
+        doraIndicators: parsed.gameState.dora_indicators,
+      })
     } catch {
       // ignore parse error
     }
-  }, [])
+  }, [setFooterHand])
 
   useEffect(() => {
     if (!state || state.candidates.length === 0) return

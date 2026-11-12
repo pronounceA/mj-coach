@@ -11,14 +11,14 @@ interface TilePickerProps {
   label?: string
 }
 
-const SUIT_STYLES: Record<string, { bg: string; border: string; text: string }> = {
+export const SUIT_STYLES: Record<string, { bg: string; border: string; text: string }> = {
   m: { bg: "bg-red-100", border: "border-red-400", text: "text-red-900" },
   p: { bg: "bg-blue-100", border: "border-blue-400", text: "text-blue-900" },
   s: { bg: "bg-green-100", border: "border-green-400", text: "text-green-900" },
   z: { bg: "bg-gray-100", border: "border-gray-400", text: "text-gray-700" },
 }
 
-const HONOR_LABELS = ["東", "南", "西", "北", "白", "發", "中"]
+export const HONOR_LABELS = ["東", "南", "西", "北", "白", "發", "中"]
 
 function tileKey(t: PhysicalTileInput): string {
   return `${t.suit}${t.rank}`

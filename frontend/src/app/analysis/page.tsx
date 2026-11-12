@@ -11,6 +11,7 @@ import { rulesApi } from "@/lib/api"
 import { analysisApi } from "@/lib/api"
 import { PhysicalTileInput, GameStateInput } from "@/types/analysis"
 import { RuleProfile } from "@/types/rule"
+import { useFooterHand } from "@/components/analysis/HandFooter"
 
 function generateRandomHand(): { hand: PhysicalTileInput[]; drawnTile: PhysicalTileInput } {
   const allTiles: PhysicalTileInput[] = []
@@ -39,10 +40,13 @@ function generateRandomHand(): { hand: PhysicalTileInput[]; drawnTile: PhysicalT
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { footerHand, setFooterHand } = useFooterHand()
 
-  const [hand, setHand] = useState<PhysicalTileInput[]>([])
-  const [drawnTile, setDrawnTile] = useState<PhysicalTileInput[]>([])
-  const [doraIndicators, setDoraIndicators] = useState<PhysicalTileInput[]>([])
+  const [hand, setHand] = useState<PhysicalTileInput[]>(footerHand.hand)
+  const [drawnTile, setDrawnTile] = useState<PhysicalTileInput[]>(
+    footerHand.drawnTile ? [footerHand.drawnTile] : []
+  )
+  const [doraIndicators, setDoraIndicators] = useState<PhysicalTileInput[]>(footerHand.doraIndicators)
   const [roundWind, setRoundWind] = useState<"E" | "S">("E")
   const [handNumber, setHandNumber] = useState(1)
   const [honba, setHonba] = useState(0)
@@ -59,6 +63,10 @@ export default function AnalysisPage() {
   useEffect(() => {
     rulesApi.list().then(setRules).catch(() => {/* no rules available */})
   }, [])
+
+  useEffect(() => {
+    setFooterHand({ hand, drawnTile: drawnTile[0] ?? null, doraIndicators })
+  }, [hand, drawnTile, doraIndicators, setFooterHand])
 
   const allUsedTiles = [...hand, ...drawnTile, ...doraIndicators]
 
